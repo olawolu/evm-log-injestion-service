@@ -49,7 +49,7 @@ func (e *IndexedEvent) Normalize() *store.ERC20Transfer {
 	}
 }
 
-func NewWebhookHandler(listener *Listener) http.Handler {
+func WebhookHandler(listener *Listener) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		observability.WebhookRequests.WithLabelValues("received").Inc()
 		decodedEvents, err := decodeJSON[[]IndexedEvent](r)
@@ -70,7 +70,7 @@ func NewWebhookHandler(listener *Listener) http.Handler {
 	})
 }
 
-func NewQueryHandler(svc *QueryService) http.Handler {
+func QueryHandler(svc *QueryService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
