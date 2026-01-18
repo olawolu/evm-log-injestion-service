@@ -56,7 +56,7 @@ func run(
 	if err != nil {
 		return errors.New("failed to create listener: " + err.Error())
 	}
-	listenerSvc.StartWorkers(ctx, 5)
+	listenerSvc.StartWorkers(5)
 
 	queryService := listener.NewQueryService(store)
 
