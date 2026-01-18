@@ -104,6 +104,30 @@ func NewQueryHandler(svc *QueryService) http.Handler {
 	})
 }
 
+func BackfillHandler(listener *Listener) http.Handler {
+	type backfillRequest struct {
+		FromBlock    uint64   `json:"from_block"`
+		ToBlock      uint64   `json:"to_block"`
+		FilterValues []string `json:"filter_values"`
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		req, err := decodeJSON[backfillRequest](r)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		go func() {
+			if err := listener.DoBackfill(req.FromBlock, req.ToBlock, req.FilterValues); err != nil {
+				log.Printf("backfill failed: %v\n", err)
+			}
+		}()
+
+		w.WriteHeader(http.StatusOK)
+	})
+}
+
 func parseTime(v string, def time.Time) time.Time {
 	if v == "" {
 		return def

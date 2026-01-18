@@ -44,7 +44,7 @@ func run(
 		return errors.New("failed to create store: " + err.Error())
 	}
 
-	addressFilter := listener.NewAddressFilter([]string{getenv("CONTRACT_ADDRESS")})
+	addressFilter := listener.NewAddressFilter([]string{getenv("WALLET_ADDRESS")})
 	indexer := pipeline.NewIndexer(getenv("INDEXER_API_KEY"), getenv("INDEXER_URL"))
 	httpHeaders := map[string]string{
 		"X-WEBHOOK-TOKEN": os.Getenv("INDEXER_WEBHOOK_TOKEN"),
@@ -52,7 +52,7 @@ func run(
 
 	deliveryMechanism := pipeline.NewDeliveryMechanism("HTTP", getenv("DELIVERY_HOST"), httpHeaders)
 
-	listenerSvc, err := listener.NewListener(store, indexer, addressFilter, deliveryMechanism, 1000)
+	listenerSvc, err := listener.NewListener(ctx, store, indexer, addressFilter, deliveryMechanism, 1000)
 	if err != nil {
 		return errors.New("failed to create listener: " + err.Error())
 	}

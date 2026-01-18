@@ -2,6 +2,7 @@
 package listener
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -16,7 +17,7 @@ func TestNewListener(t *testing.T) {
 	indexer := &pipeline.Indexer{}            // You'll need proper initialization
 	delivery := &pipeline.DeliveryMechanism{} // You'll need proper initialization
 	filter := NewAddressFilter([]string{"0x123"})
-
+	testCtx := context.Background()
 	type args struct {
 		store             *store.ERC20TransferStore
 		indexer           *pipeline.Indexer
@@ -91,7 +92,7 @@ func TestNewListener(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewListener(tt.args.store, tt.args.indexer, tt.args.addressFilter, tt.args.deliveryMechanism, tt.args.bufferSize)
+			got, err := NewListener(testCtx, tt.args.store, tt.args.indexer, tt.args.addressFilter, tt.args.deliveryMechanism, tt.args.bufferSize)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("NewListener() error = %v, wantErr %v", err, tt.wantErr)
 			}

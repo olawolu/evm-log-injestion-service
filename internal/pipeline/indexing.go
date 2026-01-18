@@ -166,4 +166,32 @@ func (i *Indexer) CreatePipeline(name, transformation, filter string, filterKeys
 	return nil
 }
 
-func (i *Indexer) BackfillHistorical() {}
+func (i *Indexer) BackfillHistorical(pipeline, network, filterValue string, beatStart, beatEnd uint64) error {
+	url := fmt.Sprintf("%s/pipelines/%s/backfill", i.baseURL, pipeline)
+	data := map[string]any{
+		"network":   network,
+		"value":     filterValue,
+		"beatEnd":   beatEnd,
+		"beatStart": beatStart,
+	}
+
+	body, err := json.Marshal(data)
+	if err != nil {
+		err = fmt.Errorf("json marshal error: %v", err)
+		return err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("X-API-KEY", i.apiKey)
+	resp, err := i.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	return nil
+}

@@ -14,8 +14,9 @@ func NewServer(listener *Listener, queryService *QueryService) http.Handler {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mux.Handle("POST /webhook", authMiddleware(NewWebhookHandler(listener)))
-	mux.Handle("GET /query", NewQueryHandler(queryService))
+	mux.Handle("POST /webhook", authMiddleware(WebhookHandler(listener)))
+	mux.Handle("GET /query", QueryHandler(queryService))
+	mux.Handle("POST /backfill", BackfillHandler(listener))
 	mux.Handle("/metrics", promhttp.Handler())
 	return mux
 }
