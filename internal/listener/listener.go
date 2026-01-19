@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/olawolu/evm-log-ingestion-service/internal/observability"
@@ -14,9 +15,9 @@ import (
 )
 
 var (
-	name         = "usdc_transfers"
-	filtervalues = []string{"0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"}
-	network      = "polygon"
+	name    = "usdc_transfers"
+	values  = os.Getenv("FILTER_ADDRESSES")
+	network = "polygon"
 	// transformationCode = `function(block) { const USDC_ADDRESS = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174".toLowerCase(); const txfers = templates.tokenTransfers(block); return txfers.map((txfer, i) => ({ chain: block._network, block_number: txfer.blockNumber, transaction_hash: txfer.transactionHash, log_index: txfer.index || i, timestamp: txfer.timestamp, from_address: txfer.from, to_address: txfer.to, token_address: txfer.token, amount: txfer.amount })); }`
 	transformationCode = `
 	function (block) {
@@ -56,10 +57,8 @@ func NewListener(
 ) (*Listener, error) {
 	buffer := make(chan IndexedEvent, bufferSize)
 
-	// httpHeaders := map[string]string{}
-	// deliveryMechanism := pipeline.NewDeliveryMechanism("HTTP", "host", httpHeaders)
-
-	indexerFilter, err := indexer.CreateFilter(name, filtervalues)
+	filterValues := strings.Split(values, ",")
+	indexerFilter, err := indexer.CreateFilter(name, filterValues)
 	if err != nil {
 		err = fmt.Errorf("indexer error: %v", err)
 		return nil, err
@@ -71,7 +70,8 @@ func NewListener(
 		return nil, err
 	}
 
-	err = indexer.CreatePipeline(name, transformation, indexerFilter, []string{"token_address"}, []string{network}, deliveryMechanism)
+	filterKeys := []string{"from_address", "to_address"}
+	err = indexer.CreatePipeline(name, transformation, indexerFilter, filterKeys, []string{network}, deliveryMechanism)
 	if err != nil {
 		err = fmt.Errorf("indexer error: %v", err)
 		return nil, err
@@ -105,7 +105,7 @@ func (l *Listener) EnqueueWork(events []IndexedEvent) error {
 }
 
 func (l *Listener) DoBackfill(from, to uint64, filterValues []string) error {
-	for _, value := range filtervalues {
+	for _, value := range filterValues {
 		select {
 		case <-l.ctx.Done():
 			return l.ctx.Err()
